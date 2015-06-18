@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 The Fusion Project
+ * Copyright (C) 2014 VanirAOSP && The Android Open Source Project
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -110,6 +110,8 @@ public class NavbarUtils {
                     return getSystemUIDrawable(context, "com.android.systemui:drawable/ic_sysbar_ime_switcher_land");
                 case ACTION_SCREENSHOT:
                     return getSystemUIDrawable(context, "com.android.systemui:drawable/ic_sysbar_screenshot_land");
+                case ACTION_SLEEP:
+                    return getSystemUIDrawable(context, "com.android.systemui:drawable/ic_sysbar_power_land");
                 case ACTION_RING_VIB:
                 case ACTION_RING_SILENT:
                 case ACTION_RING_VIB_SILENT:

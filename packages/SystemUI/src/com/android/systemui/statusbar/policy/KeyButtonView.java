@@ -23,7 +23,9 @@ import android.animation.TimeInterpolator;
 import android.app.ActivityManager;
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.content.res.Resources;
+import android.content.res.ThemeConfig;
 import android.content.res.TypedArray;
 import android.database.ContentObserver;
 import android.graphics.Canvas;
@@ -42,6 +44,8 @@ import android.os.PowerManager;
 import android.os.RemoteException;
 import android.os.ServiceManager;
 import android.os.SystemClock;
+import android.os.UserHandle;
+import android.os.UserManager;
 import android.provider.Settings;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -213,6 +217,27 @@ public class KeyButtonView extends ImageView {
         } else {
             setImageResource(R.drawable.ic_sysbar_null);
         }
+    }
+
+    @Override
+    public Resources getResources() {
+        ThemeConfig themeConfig = mContext.getResources().getConfiguration().themeConfig;
+        Resources res = null;
+        if (themeConfig != null) {
+            try {
+                final String navbarThemePkgName = themeConfig.getOverlayForNavBar();
+                final String sysuiThemePkgName = themeConfig.getOverlayForStatusBar();
+                // Check if the same theme is applied for systemui, if so we can skip this
+                if (navbarThemePkgName != null && !navbarThemePkgName.equals(sysuiThemePkgName)) {
+                    res = mContext.getPackageManager().getThemedResourcesForApplication(
+                            mContext.getPackageName(), navbarThemePkgName);
+                }
+            } catch (PackageManager.NameNotFoundException e) {
+                // don't care since we'll handle res being null below
+            }
+        }
+
+        return res != null ? res : super.getResources();
     }
 
     public void setQuiescentAlpha(float alpha, boolean animate) {
@@ -405,14 +430,16 @@ public class KeyButtonView extends ImageView {
 
     public void setTint(boolean tint) {
         setColorFilter(null);
-        if (tint) {
-            int color = Settings.Secure.getInt(mContext.getContentResolver(),
-                    Settings.Secure.NAVIGATION_BAR_TINT, -1);
-            if (color != -1) {
-                setColorFilter(color, PorterDuff.Mode.MULTIPLY);
-            } else {
-                tint = false;
-            }
+        int color = Settings.Secure.getInt(mContext.getContentResolver(),
+                Settings.Secure.NAVIGATION_BAR_TINT, -1);
+        boolean hasTint = (color != 0xff000000 && color != -1);
+        if (/* tint && */ hasTint) {
+            tint = true;
+            setColorFilter(color, PorterDuff.Mode.MULTIPLY);
+        } else {
+            tint = false;
+            Settings.Secure.putInt(mContext.getContentResolver(),
+                Settings.Secure.NAVIGATION_BAR_TINT, -1);
         }
         mShouldTintIcons = tint;
     }
@@ -425,7 +452,8 @@ public class KeyButtonView extends ImageView {
         void observe() {
             ContentResolver resolver = mContext.getContentResolver();
             resolver.registerContentObserver(Settings.Secure.getUriFor(
-                    Settings.Secure.NAVIGATION_BAR_TINT), false, this);
+                    Settings.Secure.NAVIGATION_BAR_TINT),
+                    false, this, UserHandle.USER_ALL);
             updateSettings();
         }
 

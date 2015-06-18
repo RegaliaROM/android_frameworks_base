@@ -224,6 +224,7 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
         DragDownHelper.DragDownCallback, ActivityStarter, OnUnlockMethodChangedListener {
     static final String TAG = "PhoneStatusBar";
     public static final boolean DEBUG = BaseStatusBar.DEBUG;
+    public static final boolean DEBUGS = false;
     public static final boolean SPEW = false;
     public static final boolean DUMPTRUCK = true; // extra dumpsys info
     public static final boolean DEBUG_GESTURES = false;
@@ -281,8 +282,6 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
 
     /** Allow some time inbetween the long press for back and recents. */
     private static final int LOCK_TO_APP_GESTURE_TOLERENCE = 200;
-
-    private final int HEADSUP_DEFAULT_BACKGROUNDCOLOR = 0x00ffffff;
 
     PhoneStatusBarPolicy mIconPolicy;
 
@@ -373,6 +372,7 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
     private TaskManager mTaskManager;
     private LinearLayout mTaskManagerPanel;
     private ImageButton mTaskManagerButton;
+    private boolean mShowTaskManager;
     private boolean showTaskList = false;
 
     // top bar
@@ -400,10 +400,6 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
 
     // Status bar carrier
     private boolean mShowStatusBarCarrier;
-
-    // Heads Up Custom Colors
-    private int mHeadsUpCustomBg;
-    private int mHeadsUpCustomText;
 
     // battery
     private BatteryMeterView mBatteryView;
@@ -531,6 +527,9 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
             resolver.registerContentObserver(Settings.System.getUriFor(
                     Settings.System.NOTIFICATION_DRAWER_CLEAR_ALL_ICON_COLOR),
                     false, this, UserHandle.USER_ALL);
+            resolver.registerContentObserver(Settings.System.getUriFor(
+                    Settings.System.ENABLE_TASK_MANAGER),
+                    false, this, UserHandle.USER_ALL);
             update();
         }
 
@@ -588,6 +587,17 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
                     updateClearAll();
                     updateEmptyShadeView();
             } else if (uri.equals(Settings.System.getUriFor(
+                    Settings.System.ENABLE_TASK_MANAGER))) {
+                    mShowTaskManager = Settings.System.getIntForUser(
+                        mContext.getContentResolver(),
+                        Settings.System.ENABLE_TASK_MANAGER,
+                        0, UserHandle.USER_CURRENT) == 1;
+                    recreateStatusBar();
+                    updateRowStates();
+                    updateSpeedbump();
+                    updateClearAll();
+                    updateEmptyShadeView();
+            } else if (uri.equals(Settings.System.getUriFor(
                     Settings.System.NOTIFICATION_DRAWER_CLEAR_ALL_ICON_COLOR))) {
                 UpdateNotifDrawerClearAllIconColor();
             } else if (uri.equals(Settings.System.getUriFor(
@@ -600,7 +610,7 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
                     Settings.System.HEADS_UP_TEXT_COLOR))) {
                     mHeadsUpCustomText = Settings.System.getIntForUser(
                         mContext.getContentResolver(),
-                        Settings.System.HEADS_UP_TEXT_COLOR, 0x00000000,
+                        Settings.System.HEADS_UP_TEXT_COLOR, HEADSUP_DEFAULT_TEXTCOLOR,
                         UserHandle.USER_CURRENT);
             }
             update();
@@ -644,6 +654,9 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
             mShowStatusBarCarrier = Settings.System.getIntForUser(resolver,
                     Settings.System.STATUS_BAR_CARRIER, 0, mCurrentUserId) == 1;
             showStatusBarCarrierLabel(mShowStatusBarCarrier);
+
+            mShowTaskManager = Settings.System.getIntForUser(resolver,
+                    Settings.System.ENABLE_TASK_MANAGER, 0, UserHandle.USER_CURRENT) == 1;
         }
     }
 
@@ -683,10 +696,8 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
 
     private void forceAddNavigationBar() {
         // If we have no Navbar view and we should have one, create it
-        if (mNavigationBarView != null) {
-            return;
-        }
-
+        if (mNavigationBarView != null) return;
+        if (DEBUGS) Log.v(TAG, "forceAddNavigationBar()");
         mNavigationBarView =
                 (NavigationBarView) View.inflate(mContext, R.layout.navigation_bar, null);
 
@@ -723,17 +734,18 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
         public void onChange(boolean selfChange) {
             boolean wasUsing = mUseHeadsUp;
             mUseHeadsUp = ENABLE_HEADS_UP && !mDisableNotificationAlerts
-                    && Settings.Global.HEADS_UP_OFF != Settings.Global.getInt(
-                    mContext.getContentResolver(), Settings.Global.HEADS_UP_NOTIFICATIONS_ENABLED,
-                    Settings.Global.HEADS_UP_OFF);
+                && (Settings.Global.HEADS_UP_OFF != Settings.Global.getInt(
+                        mContext.getContentResolver(),
+                        Settings.Global.HEADS_UP_NOTIFICATIONS_ENABLED,
+                        Settings.Global.HEADS_UP_OFF));
             mHeadsUpTicker = mUseHeadsUp && 0 != Settings.Global.getInt(
                     mContext.getContentResolver(), SETTING_HEADS_UP_TICKER, 0);
-            Log.d(TAG, "heads up is " + (mUseHeadsUp ? "enabled" : "disabled"));
+            Log.d(TAG, "initial heads up is " + (mUseHeadsUp ? "enabled" : "disabled"));
             mHeadsUpUserEnabled = 0 != Settings.System.getIntForUser(
                     mContext.getContentResolver(), Settings.System.HEADS_UP_USER_ENABLED,
                     Settings.System.HEADS_UP_USER_ON,
                     UserHandle.USER_CURRENT);
-            Log.d(TAG, "heads up is " + (mUseHeadsUp && mHeadsUpUserEnabled ? "enabled" : "disabled"));
+            Log.d(TAG, "final heads up is " + (mUseHeadsUp && mHeadsUpUserEnabled ? "enabled" : "disabled"));
             if (wasUsing != mUseHeadsUp) {
                 if (!mUseHeadsUp || !mHeadsUpUserEnabled) {
                     Log.d(TAG, "dismissing any existing heads up notification on disable event");
@@ -1278,9 +1290,6 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
 
             mCarrierLabel = (TextView)mStatusBarWindowContent.findViewById(R.id.carrier_label);
             mShowCarrierInPanel = (mCarrierLabel != null);
-
-            if (DEBUG) Log.v(TAG, "carrierlabel=" + mCarrierLabel + " show=" +
-                                    mShowCarrierInPanel);
             if (mShowCarrierInPanel) {
                 mCarrierLabel.setVisibility(mCarrierLabelVisible ? View.VISIBLE : View.INVISIBLE);
 
@@ -1325,7 +1334,6 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
 
             mCarrierLabel = (TextView)mStatusBarWindowContent.findViewById(R.id.carrier_label);
             mShowCarrierInPanel = (mCarrierLabel != null);
-            if (DEBUG) Log.v(TAG, "carrierlabel=" + mCarrierLabel + " show=" + mShowCarrierInPanel);
             if (mShowCarrierInPanel) {
                 mCarrierLabel.setVisibility(mCarrierLabelVisible ? View.VISIBLE : View.INVISIBLE);
 
@@ -1426,6 +1434,20 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
                 }
             });
         }
+
+        // Task manager
+        mTaskManagerPanel =
+                (LinearLayout) mStatusBarWindowContent.findViewById(R.id.task_manager_panel);
+        mTaskManager = new TaskManager(mContext, mTaskManagerPanel);
+        mTaskManager.setActivityStarter(this);
+        mTaskManagerButton = (ImageButton) mHeader.findViewById(R.id.task_manager_button);
+        mTaskManagerButton.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View arg0) {
+                showTaskList = !showTaskList;
+                mNotificationPanel.setTaskManagerVisibility(showTaskList);
+            }
+        });
 
         // User info. Trigger first load.
         mHeader.setUserInfoController(mUserInfoController);
@@ -1751,18 +1773,20 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
     }
 
     private void prepareNavigationBarView(boolean forceReset) {
+        if (mNavigationBarView == null) return;
         mNavigationBarView.reorient();
-
-        if (mNavigationBarView.getRecentsButton() != null) {
-            mNavigationBarView.getRecentsButton().setOnClickListener(mRecentsClickListener);
-            mNavigationBarView.getRecentsButton().setOnTouchListener(mRecentsPreloadOnTouchListener);
-            mNavigationBarView.getRecentsButton().setLongClickable(true);
-            mNavigationBarView.getRecentsButton().setOnLongClickListener(mLongPressBackRecentsListener);
+        View button = mNavigationBarView.getRecentsButton();
+        if (button != null) {
+            button.setOnClickListener(mRecentsClickListener);
+            button.setOnTouchListener(mRecentsPreloadOnTouchListener);
+            button.setLongClickable(true);
+            button.setOnLongClickListener(mLongPressBackRecentsListener);
         }
 
-        if (mNavigationBarView.getBackButton() != null) {
-            mNavigationBarView.getBackButton().setLongClickable(true);
-            mNavigationBarView.getBackButton().setOnLongClickListener(mLongPressBackRecentsListener);
+        button = mNavigationBarView.getBackButton();
+        if (button != null) {
+            button.setLongClickable(true);
+            button.setOnLongClickListener(mLongPressBackRecentsListener);
         }
         setHomeActionListener();
 
@@ -1949,20 +1973,21 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
             ViewGroup holder = mHeadsUpNotificationView.getHolder();
 
             // get text color value
-            int mHeadsUpCustomTextColor = Settings.System.getIntForUser(
-                mContext.getContentResolver(), Settings.System.HEADS_UP_TEXT_COLOR,
-                0x00000000, UserHandle.USER_CURRENT);
+            mHeadsUpCustomText = Settings.System.getIntForUser(
+                mContext.getContentResolver(),
+                Settings.System.HEADS_UP_TEXT_COLOR,
+                HEADSUP_DEFAULT_TEXTCOLOR, UserHandle.USER_CURRENT);
 
-            if (inflateViews(interruptionCandidate, holder, true, mHeadsUpCustomTextColor)) {
+            if (inflateViewsForHeadsUp(interruptionCandidate, holder, mHeadsUpCustomText)) {
 
                 // get background value
-                int mHeadsUpCustomBg = Settings.System.getIntForUser(
+                mHeadsUpCustomBg = Settings.System.getIntForUser(
                     mContext.getContentResolver(), Settings.System.HEADS_UP_BG_COLOR,
                     HEADSUP_DEFAULT_BACKGROUNDCOLOR, UserHandle.USER_CURRENT);
 
                 // 1. Populate mHeadsUpNotificationView
-                mHeadsUpNotificationView.showNotification(interruptionCandidate,
-                    mHeadsUpCustomBg);
+                mHeadsUpNotificationView.showNotification(
+                    interruptionCandidate, mHeadsUpCustomBg);
 
                 // do not show the notification in the shade, yet.
                 return;
@@ -3050,7 +3075,7 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
         mWaitingForKeyguardExit = false;
         disable(mDisabledUnmodified, !force /* animate */);
         setInteracting(StatusBarManager.WINDOW_STATUS_BAR, true);
-        if (mContext.getResources().getBoolean(R.bool.config_showTaskManagerSwitcher)) {
+        if (mShowTaskManager) {
             mTaskManager.refreshTaskManagerView();
         }
     }
@@ -4145,16 +4170,20 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
                 Configuration config = mContext.getResources().getConfiguration();
                 try {
                     // position app sidebar on left if in landscape orientation and device has a navbar
-                    if (mWindowManagerService.hasNavigationBar() &&
-                            config.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-                        mWindowManager.updateViewLayout(mAppSidebar,
+                    ContentResolver resolver = mContext.getContentResolver();
+                    boolean sidebarEnabled = Settings.System.getInt(
+                        resolver, Settings.System.APP_SIDEBAR_ENABLED, 0) == 1;
+                    if (sidebarEnabled
+                        && mWindowManagerService.hasNavigationBar()
+                        && config.orientation == Configuration.ORIENTATION_LANDSCAPE) {
+                            mWindowManager.updateViewLayout(mAppSidebar,
                                 getAppSidebarLayoutParams(AppSidebar.SIDEBAR_POSITION_LEFT));
-                        mHandler.postDelayed(new Runnable() {
-                            @Override
-                            public void run() {
-                                mAppSidebar.setPosition(AppSidebar.SIDEBAR_POSITION_LEFT);
-                            }
-                        }, 500);
+                            mHandler.postDelayed(new Runnable() {
+                                @Override
+                                public void run() {
+                                    mAppSidebar.setPosition(AppSidebar.SIDEBAR_POSITION_LEFT);
+                                }
+                            }, 500);
                     }
                 } catch (RemoteException e) {
                 }
@@ -5367,6 +5396,7 @@ public class PhoneStatusBar extends BaseStatusBar implements DemoMode,
                 if ((time - mLastLockToAppLongPress) < LOCK_TO_APP_GESTURE_TOLERENCE) {
                     activityManager.stopLockTaskModeOnCurrent();
                 } else if ((v.getId() == R.id.back)
+                        && mNavigationBarView != null
                         && !mNavigationBarView.getRecentsButton().isPressed()) {
                     // If we aren't pressing recents right now then they presses
                     // won't be together, so send the standard long-press action.

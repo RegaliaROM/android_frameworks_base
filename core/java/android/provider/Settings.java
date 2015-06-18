@@ -2883,6 +2883,30 @@ public final class Settings {
         public static final String USE_EDGE_SERVICE_FOR_GESTURES = "edge_service_for_gestures";
 
         /**
+         * Determine custom scroll friction.
+         * @hide
+         */
+        public static final String CUSTOM_SCROLL_FRICTION = "custom_scroll_friction";
+
+        /**
+         * Determine custom fling velocity.
+         * @hide
+         */
+        public static final String CUSTOM_FLING_VELOCITY = "custom_fling_velocity";
+
+        /**
+         * Determine custom overscroll distance.
+         * @hide
+         */
+        public static final String CUSTOM_OVERSCROLL_DISTANCE = "custom_overscroll_distance";
+
+        /**
+         * Determine custom overfling distance.
+         * @hide
+         */
+        public static final String CUSTOM_OVERFLING_DISTANCE = "custom_overfling_distance";
+
+        /**
          * Control the type of rotation which can be performed using the accelerometer
          * if ACCELEROMETER_ROTATION is enabled.
          * Value is a bitwise combination of
@@ -3113,6 +3137,24 @@ public final class Settings {
          * @hide
          */
         public static final String BATTERY_LIGHT_REALLY_FULL_COLOR = "battery_light_really_full_color";
+
+        /**
+         * Give SMS notifications a breathing effect
+         * @hide
+         */
+        public static final String KEY_SMS_BREATH = "sms_breath";
+
+        /**
+         * Give Missed call notifications a breathing effect
+         * @hide
+         */
+        public static final String KEY_MISSED_CALL_BREATH = "missed_call_breath";
+
+        /**
+         * Give Voicemail notifications a breathing effect
+         * @hide
+         */
+        public static final String KEY_VOICEMAIL_BREATH = "voicemail_breath";
 
         /**
          * Sprint MWI Quirk: Show message wait indicator notifications
@@ -3666,6 +3708,12 @@ public final class Settings {
         public static final String STATUS_BAR_BATTERY_STATUS_SHOW_CIRCLE_DOTTED = "status_bar_battery_status_show_circle_dotted";
 
         /**
+         * Enable double tap gesture anywhere on the lock screen put device to sleep
+         * @hide
+         */
+        public static final String DOUBLE_TAP_SLEEP_ANYWHERE = "double_tap_sleep_anywhere";
+
+        /**
          * Length of the Circle battery status dots on the status bar
          *
          * Values 0 - 10
@@ -4109,6 +4157,12 @@ public final class Settings {
          * @hide
          */
         public static final String OVERSCROLL_WEIGHT = "overscroll_weight";
+
+        /**
+         *
+         * @hide
+         */
+        public static final String ANIMATION_CONTROLS_NO_SCROLL = "animation_controls_no_scroll";
 
         /**
          * AOKP Custom System Animations
@@ -4643,6 +4697,25 @@ public final class Settings {
          * @hide
          */
         public static final String HEADS_UP_SHOW_STATUS_BUTTON = "heads_up_show_status_button";
+
+        /**
+         * Wether to show a task manager in expanded status bar header
+         *
+         * @hide
+         */
+        public static final String ENABLE_TASK_MANAGER = "enable_task_manager";
+
+        /**
+         * Whether to disable the torch when the screen turns off
+         * @hide
+         */
+        public static final String DISABLE_TORCH_ON_SCREEN_OFF = "disable_torch_on_screen_off";
+
+        /**
+         * Delay to disable the torch when the screen turns off
+         * @hide
+         */
+        public static final String DISABLE_TORCH_ON_SCREEN_OFF_DELAY = "disable_torch_on_screen_off_delay";
 
         /**
          * Settings to backup. This is here so that it's in the same place as the settings

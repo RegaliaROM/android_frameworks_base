@@ -53,58 +53,57 @@
         android:src="@drawable/ic_settings"
         android:contentDescription="@string/accessibility_desc_settings" />
 
-    <ImageButton android:id="@+id/task_manager_button"
+    <com.android.keyguard.AlphaOptimizedImageButton android:id="@+id/task_manager_button"
         style="@android:style/Widget.Material.Button.Borderless"
         android:layout_toStartOf="@id/settings_button"
         android:layout_width="48dp"
         android:layout_height="@dimen/status_bar_header_height"
-        android:layout_marginStart="8dp"
+        android:background="@drawable/ripple_drawable"
         android:src="@drawable/ic_tasklist_switch_normal"
         android:visibility="gone"/>
 
-    <ImageButton android:id="@+id/heads_up_button"
+    <com.android.keyguard.AlphaOptimizedImageButton android:id="@+id/heads_up_button"
         style="@android:style/Widget.Material.Button.Borderless"
         android:layout_toStartOf="@id/task_manager_button"
         android:layout_width="48dp"
         android:layout_height="@dimen/status_bar_header_height"
         android:background="@drawable/ripple_drawable"
-        android:layout_marginStart="8dp"
         android:visibility="gone"/>
 
-    <ImageButton android:id="@+id/status_bar_power_menu"
+    <com.android.keyguard.AlphaOptimizedImageButton android:id="@+id/status_bar_power_menu"
         style="@android:style/Widget.Material.Button.Borderless"
         android:layout_toStartOf="@id/heads_up_button"
         android:layout_width="48dp"
         android:layout_height="@dimen/status_bar_header_height"
         android:background="@drawable/ripple_drawable"
-        android:layout_marginStart="8dp"
         android:src="@drawable/ic_lock_power_off_alpha"
         android:visibility="gone"/>
 
     <LinearLayout android:id="@+id/system_icons_super_container"
         android:layout_width="wrap_content"
         android:layout_height="@dimen/status_bar_header_height"
-        android:layout_toStartOf="@id/multi_user_switch"
+        android:layout_toStartOf="@id/settings_button"
         android:layout_alignWithParentIfMissing="true"
         android:layout_marginStart="16dp"
         android:background="@drawable/ripple_drawable"
         android:paddingEnd="4dp" >
+
         <FrameLayout android:id="@+id/system_icons_container"
             android:layout_width="wrap_content"
             android:layout_height="@dimen/status_bar_height"
-            android:layout_gravity="center_vertical"
-            >
+            android:layout_gravity="center_vertical">
             <include layout="@layout/system_icons" />
         </FrameLayout>
+
         <com.android.systemui.BatteryLevelTextView android:id="@+id/battery_level_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_vertical"
             android:layout_marginStart="@dimen/header_battery_margin_expanded"
             android:paddingEnd="@dimen/battery_level_padding_end"
-            android:textColor="#ffffff"
+            android:textColor="@color/status_bar_battery_level_text_color"
             android:textSize="@dimen/battery_level_text_size"
-            android:importantForAccessibility="noHideDescendants"/>
+            android:importantForAccessibility="noHideDescendants" />
 
     </LinearLayout>
 
@@ -171,7 +170,7 @@
         android:layout_marginBottom="4dp"
         android:drawablePadding="6dp"
         android:drawableStart="@drawable/ic_access_alarms_small"
-        android:textColor="#64ffffff"
+        android:textColor="@color/status_bar_alarm_status_text_color"
         android:textAppearance="@style/TextAppearance.StatusBar.Expanded.Date"
         android:paddingEnd="6dp"
         android:paddingStart="6dp"
@@ -195,19 +194,17 @@
             android:id="@+id/weather_line_1"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingEnd="16dp"
+            android:paddingEnd="@dimen/status_bar_weather_padding_end"
             android:gravity="right"
-            android:textColor="@color/status_bar_temperature_text_color"
-            android:textSize="@dimen/weather_text_size"
+            android:textAppearance="@style/TextAppearance.StatusBar.Expanded.WeatherTemp"
             android:importantForAccessibility="noHideDescendants"/>
     <TextView
             android:id="@+id/weather_line_2"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingEnd="16dp"
+            android:paddingEnd="@dimen/status_bar_weather_padding_end"
             android:gravity="right"
-            android:textColor="@color/status_bar_temperature_location_text_color"
-            android:textSize="@dimen/weather_text_size"
+            android:textAppearance="@style/TextAppearance.StatusBar.Expanded.WeatherLocation"
             android:importantForAccessibility="noHideDescendants"/>
     </LinearLayout>
 
